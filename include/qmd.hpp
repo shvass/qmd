@@ -23,8 +23,8 @@
 /**
  * @brief motor specific configurations
  */
-#define MOTOR_MIN_PULSEWIDTH_US 10      // Minimum pulse width in microseconds 
-#define MOTOR_MAX_PULSEWIDTH_US 19000   // maximum pulse width in microseconds 
+#define MOTOR_MIN_PULSEWIDTH_US 100      // Minimum pulse width in microseconds 
+#define MOTOR_MAX_PULSEWIDTH_US 19900   // maximum pulse width in microseconds 
 #define MOTOR_TIMEBASE_RESOLUTION_HZ 1 * 1000 * 1000   // clock frequency in Hertz  ( 1 MHz current) 
 #define MOTOR_TIMEBASE_PERIOD        20000      // PWM time period in clock ticks   ( 20 ms current) 
 
@@ -32,22 +32,24 @@
 
 
 /**
- * @brief driver - two channel pwm generator optimized for driving motors
+ * @brief qmd - quad channel motor driver
  * 
- * @details Two channel pwm generator optimized such that it uses single timer
- *  to compare and driver two pwm signal simulataneously.
+ * @details Quad channel pwm generator optimized such that it uses single mcpwm esp32 peripheral
+ *  to compare and driver quad pwm signal simulataneously.
+ * 
+ * to driver a motor, the module generates one pwm signal and one direction signal.
  */
-class driver{
+class qmd{
 
     public:
 
     /**
      * @brief configures peripherals to generate pwm at mentioned GPIOs.
-     * 
-     * @param left  GPIO pin for left pwm output
-     * @param right  GPIO pin for right pwm output
+     * @param count number of channels to operate in parallel (max 4)
+     * @param pwmPins  array of GPIO pin numbers for pwm output
+     * @param dirPins  array of GPIO pin numbers for direction output
      */
-    driver(int left, int right);
+    qmd(int count, int pwmPins[], int dirPins[]);
 
 
     /**
@@ -62,42 +64,27 @@ class driver{
 
 
     /**
-     * @brief set left and right motor speeds simulatneously
+     * @brief speeds of the motors to set must be strictly between  
      * 
-     * @param left noramalized left motor speed
-     * @param right noramalized right motor speed
      */
-    void set(float left = -1, float right = -1);
+    float speeds[4];
 
-    /**
-     * @brief Set the Left motor speed
-     * 
-     * @param left noramalized left motor speed
-     */
-    void setLeft(float left);
-
-    /**
-     * @brief Set the Left motor speed
-     * 
-     * @param left noramalized left motor speed
-     */
-    void setRight(float right);
-
-
+    void update();
 
     private:
 
+    int dirPins[4];
     // mcpwm handlers for internal use  
 
     /// @brief  pcmwm timers
     mcpwm_timer_handle_t timer;
 
     /// @brief mcpwm operators
-    mcpwm_oper_handle_t lop = nullptr, rop = nullptr;
+    mcpwm_oper_handle_t ops[2] = {nullptr};
     /// @brief mcpwm comparators
-    mcpwm_cmpr_handle_t lcmp = nullptr, rcmp = nullptr;
+    mcpwm_cmpr_handle_t cmps[4] = {nullptr};
     /// @brief mcpwm generators
-    mcpwm_gen_handle_t lgen = nullptr, rgen = nullptr;
+    mcpwm_gen_handle_t gens[4] = {nullptr};
 
 };
 
