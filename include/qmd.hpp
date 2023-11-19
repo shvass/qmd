@@ -1,4 +1,4 @@
-// rc_car - esp-idf RC driver libraries 
+// qmd - esp-idf quad motor driver 
 // Copyright (C) 2023  akshay bansod <akshayb@gmx.com>
 
 // This program is free software: you can redistribute it and/or modify
