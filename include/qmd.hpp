@@ -23,12 +23,12 @@
 /**
  * @brief motor specific configurations
  */
-#define MOTOR_MIN_PULSEWIDTH_US 100      // Minimum pulse width in microseconds 
-#define MOTOR_MAX_PULSEWIDTH_US 19900   // maximum pulse width in microseconds 
+#define MOTOR_MIN_PULSEWIDTH_US 500      // Minimum pulse width in microseconds 
+#define MOTOR_MAX_PULSEWIDTH_US 2500   // maximum pulse width in microseconds 
 #define MOTOR_TIMEBASE_RESOLUTION_HZ 1 * 1000 * 1000   // clock frequency in Hertz  ( 1 MHz current) 
 #define MOTOR_TIMEBASE_PERIOD        20000      // PWM time period in clock ticks   ( 20 ms current) 
 
-
+#define MOTOR_COUNT_MAX 6  // maximum number of motor parallelly operated by this chipset
 
 
 /**
@@ -43,13 +43,15 @@ class qmd{
 
     public:
 
+    static int def_pwm_pins[], def_dir_pins[];
+
     /**
      * @brief configures peripherals to generate pwm at mentioned GPIOs.
      * @param count number of channels to operate in parallel (max 4)
      * @param pwmPins  array of GPIO pin numbers for pwm output
      * @param dirPins  array of GPIO pin numbers for direction output
      */
-    qmd(int count, int pwmPins[], int dirPins[]);
+    qmd(int count = 0, int pwmPins[] = def_pwm_pins, int dirPins[] = def_dir_pins);
 
 
     /**
@@ -67,26 +69,28 @@ class qmd{
      * @brief speeds of the motors to set must be strictly between  
      * 
      */
-    float speeds[4];
+    float speeds[MOTOR_COUNT_MAX];
 
     void update();
 
     private:
 
-    int dirPins[4];
+    int dirPins[MOTOR_COUNT_MAX];
+    int pwmPins[MOTOR_COUNT_MAX];
     // mcpwm handlers for internal use  
 
     /// @brief  pcmwm timers
     mcpwm_timer_handle_t timer;
 
     /// @brief mcpwm operators
-    mcpwm_oper_handle_t ops[2] = {nullptr};
+    mcpwm_oper_handle_t ops[3] = {nullptr};
     /// @brief mcpwm comparators
-    mcpwm_cmpr_handle_t cmps[4] = {nullptr};
+    mcpwm_cmpr_handle_t cmps[MOTOR_COUNT_MAX] = {nullptr};
     /// @brief mcpwm generators
-    mcpwm_gen_handle_t gens[4] = {nullptr};
+    mcpwm_gen_handle_t gens[MOTOR_COUNT_MAX] = {nullptr};
 
 };
+
 
 
 #endif// DRIVER_HPP
