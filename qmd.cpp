@@ -17,49 +17,32 @@
 #include "driver/gpio.h"
 #include <string.h>
 
-// /**
-//  * @brief default pwm and direction pins
-//  * 
-//  */
-// int qmd::def_pwm_pins[] = {
-//     GPIO_NUM_12, 
-//     GPIO_NUM_13, 
-//     GPIO_NUM_14, 
-//     GPIO_NUM_27,
-//     // GPIO_NUM_26, 
-//     // GPIO_NUM_25, 
-//     GPIO_NUM_33, 
-//     GPIO_NUM_32, 
-// };
-
-// int qmd::def_dir_pins[] = {
-//     GPIO_NUM_26, 
-//     GPIO_NUM_25, 
-//     GPIO_NUM_33, 
-//     GPIO_NUM_32
-// };
-
-
 /**
  * @brief default pwm and direction pins
  * 
  */
 int qmd::def_pwm_pins[] = {
-    GPIO_NUM_26, 
-    GPIO_NUM_27, 
-    GPIO_NUM_14, 
-    GPIO_NUM_12,
-    GPIO_NUM_5, 
-    GPIO_NUM_17, 
+    GPIO_NUM_19, 
+    GPIO_NUM_21, 
+    GPIO_NUM_32, 
+    GPIO_NUM_33,
+    GPIO_NUM_22,
+    GPIO_NUM_23,
+    GPIO_NUM_25,
+    GPIO_NUM_26,
+    GPIO_NUM_27,
+    GPIO_NUM_14,
+    GPIO_NUM_13,
+    GPIO_NUM_15,
 };
 
 int qmd::def_dir_pins[] = {
-    GPIO_NUM_32, 
-    GPIO_NUM_33, 
-    GPIO_NUM_25,
-    GPIO_NUM_23,
-    GPIO_NUM_22,
-    GPIO_NUM_21
+    GPIO_NUM_12, 
+    GPIO_NUM_4, 
+    GPIO_NUM_16,
+    GPIO_NUM_17,
+    GPIO_NUM_5,
+    GPIO_NUM_18
 };
 
 
@@ -93,61 +76,9 @@ qmd::qmd(int count, int pwmPins[], int dirPins[]) {
     memcpy(this->dirPins, dirPins, sizeof(int) * MOTOR_COUNT_MAX);
     memcpy(this->pwmPins, pwmPins, sizeof(int) * MOTOR_COUNT_MAX);
 
-    // common timer for both pwm drivers
-    mcpwm_new_timer(&timer_config, &timer);
+    setupTimer(unit0);
+    setupTimer(unit1, 1);
 
-    mcpwm_new_operator(&operator_config, &ops[0]);
-    mcpwm_new_operator(&operator_config, &ops[1]);
-    mcpwm_new_operator(&operator_config, &ops[2]);
-
-    mcpwm_operator_connect_timer(ops[0], timer);
-    mcpwm_operator_connect_timer(ops[1], timer);
-    mcpwm_operator_connect_timer(ops[2], timer);
-
-
-    mcpwm_new_comparator(ops[0], &comparator_config, &cmps[0]);
-    mcpwm_new_comparator(ops[0], &comparator_config, &cmps[1]);
-    mcpwm_new_comparator(ops[1], &comparator_config, &cmps[2]);
-    mcpwm_new_comparator(ops[1], &comparator_config, &cmps[3]);
-    mcpwm_new_comparator(ops[2], &comparator_config, &cmps[4]);
-    mcpwm_new_comparator(ops[2], &comparator_config, &cmps[5]);
-
-
-    mcpwm_generator_config_t generator_config = {
-        .gen_gpio_num = pwmPins[0],
-        .flags = {}
-    };
-    
-    generator_config.gen_gpio_num = pwmPins[0];
-    mcpwm_new_generator(ops[0], &generator_config, &gens[0]);
-    generator_config.gen_gpio_num = pwmPins[1];
-    mcpwm_new_generator(ops[0], &generator_config, &gens[1]);
-    generator_config.gen_gpio_num = pwmPins[2];
-    mcpwm_new_generator(ops[1], &generator_config, &gens[2]);
-    generator_config.gen_gpio_num = pwmPins[3];
-    mcpwm_new_generator(ops[1], &generator_config, &gens[3]);
-    generator_config.gen_gpio_num = pwmPins[4];
-    mcpwm_new_generator(ops[2], &generator_config, &gens[4]);
-    generator_config.gen_gpio_num = pwmPins[5];
-    mcpwm_new_generator(ops[2], &generator_config, &gens[5]);
-
-
-
-
-    // left comparator operations
-    // go high on counter empty
-    for(int i = 0; i < MOTOR_COUNT_MAX; i++){
-
-        mcpwm_generator_set_action_on_timer_event(gens[i],
-        MCPWM_GEN_TIMER_EVENT_ACTION(MCPWM_TIMER_DIRECTION_UP, MCPWM_TIMER_EVENT_EMPTY, MCPWM_GEN_ACTION_HIGH));
-    
-        // go low on compare threshold
-        mcpwm_generator_set_action_on_compare_event(gens[i],
-                MCPWM_GEN_COMPARE_EVENT_ACTION(MCPWM_TIMER_DIRECTION_UP, cmps[i], MCPWM_GEN_ACTION_LOW));
-    }
-
-    mcpwm_timer_enable(timer);
-    mcpwm_timer_start_stop(timer, MCPWM_TIMER_START_NO_STOP);
     gpio_config_t gpio_cfg = {
         .pin_bit_mask = 0,
         .mode = GPIO_MODE_OUTPUT,               
@@ -156,7 +87,7 @@ qmd::qmd(int count, int pwmPins[], int dirPins[]) {
         .intr_type = GPIO_INTR_DISABLE 
     };
 
-    for(int i = 0; i < MOTOR_COUNT_MAX; i++){
+    for(int i = 0; i < UNIT_CHANNEL_COUNT; i++){
         gpio_cfg.pin_bit_mask |= GET_BIT(dirPins[i]);
     }
 
@@ -170,13 +101,79 @@ void qmd::update(){
 
     float speed = 0.0f;
 
-    for( int  i = 0; i < MOTOR_COUNT_MAX; i++) {
+    for( int  i = 0; i < UNIT_CHANNEL_COUNT; i++) {
         speed = speeds[i];
         if(speed < 0.0f) {
             gpio_set_level((gpio_num_t) dirPins[i], 1);
             speed += 1.0f;
         }
         else gpio_set_level((gpio_num_t) dirPins[i], 0);
-        mcpwm_comparator_set_compare_value(cmps[i], map(speed));
+        mcpwm_comparator_set_compare_value(unit0.cmps[i], map(speed));
     };
+}
+
+
+void qmd::setupTimer(unitHandler &unit, int id)
+{
+
+    timer_config.group_id = id;
+    operator_config.group_id = id;
+
+    // common timer for both pwm drivers
+    mcpwm_new_timer(&timer_config, &unit.timer);
+
+    mcpwm_new_operator(&operator_config, &unit.ops[0]);
+    mcpwm_new_operator(&operator_config, &unit.ops[1]);
+    mcpwm_new_operator(&operator_config, &unit.ops[2]);
+
+    mcpwm_operator_connect_timer(unit.ops[0], unit.timer);
+    mcpwm_operator_connect_timer(unit.ops[1], unit.timer);
+    mcpwm_operator_connect_timer(unit.ops[2], unit.timer);
+
+
+    mcpwm_new_comparator(unit.ops[0], &comparator_config, &unit.cmps[0]);
+    mcpwm_new_comparator(unit.ops[0], &comparator_config, &unit.cmps[1]);
+    mcpwm_new_comparator(unit.ops[1], &comparator_config, &unit.cmps[2]);
+    mcpwm_new_comparator(unit.ops[1], &comparator_config, &unit.cmps[3]);
+    mcpwm_new_comparator(unit.ops[2], &comparator_config, &unit.cmps[4]);
+    mcpwm_new_comparator(unit.ops[2], &comparator_config, &unit.cmps[5]);
+
+
+    mcpwm_generator_config_t generator_config = {
+        .gen_gpio_num = pwmPins[0],
+        .flags = {}
+    };
+
+    int offset = (id) ? UNIT_CHANNEL_COUNT : 0;
+
+    generator_config.gen_gpio_num = pwmPins[offset + 0];
+    mcpwm_new_generator(unit.ops[0], &generator_config, &unit.gens[0]);
+    generator_config.gen_gpio_num = pwmPins[offset + 1];
+    mcpwm_new_generator(unit.ops[0], &generator_config, &unit.gens[1]);
+    generator_config.gen_gpio_num = pwmPins[offset + 2];
+    mcpwm_new_generator(unit.ops[1], &generator_config, &unit.gens[2]);
+    generator_config.gen_gpio_num = pwmPins[offset + 3];
+    mcpwm_new_generator(unit.ops[1], &generator_config, &unit.gens[3]);
+    generator_config.gen_gpio_num = pwmPins[offset + 4];
+    mcpwm_new_generator(unit.ops[2], &generator_config, &unit.gens[4]);
+    generator_config.gen_gpio_num = pwmPins[offset + 5];
+    mcpwm_new_generator(unit.ops[2], &generator_config, &unit.gens[5]);
+
+
+
+
+    // left comparator operations
+    // go high on counter empty
+    for(int i = 0; i < UNIT_CHANNEL_COUNT; i++){
+
+        mcpwm_generator_set_action_on_timer_event(unit.gens[i],
+        MCPWM_GEN_TIMER_EVENT_ACTION(MCPWM_TIMER_DIRECTION_UP, MCPWM_TIMER_EVENT_EMPTY, MCPWM_GEN_ACTION_HIGH));
+    
+        // go low on compare threshold
+        mcpwm_generator_set_action_on_compare_event(unit.gens[i],
+                MCPWM_GEN_COMPARE_EVENT_ACTION(MCPWM_TIMER_DIRECTION_UP, unit.cmps[i], MCPWM_GEN_ACTION_LOW));
+    }
+
+    mcpwm_timer_enable(unit.timer);
+    mcpwm_timer_start_stop(unit.timer, MCPWM_TIMER_START_NO_STOP);
 };
