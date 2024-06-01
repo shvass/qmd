@@ -43,17 +43,14 @@
  */
 class qmd{
 
-    public:
-
-    static int def_pwm_pins[], def_dir_pins[];
-
+public:
     /**
      * @brief configures peripherals to generate pwm at mentioned GPIOs.
-     * @param count number of channels to operate in parallel (max 4)
+     * @param count number of channels to operate in parallel (max 12)
      * @param pwmPins  array of GPIO pin numbers for pwm output
      * @param dirPins  array of GPIO pin numbers for direction output
      */
-    qmd(int count = 0, int pwmPins[] = def_pwm_pins, int dirPins[] = def_dir_pins);
+    qmd(int count = 0, int pwmPins[], int dirPins[]);
 
 
     /**
@@ -62,20 +59,30 @@ class qmd{
      * @param norm normalized float input strictly between 0.0f to 1.0f 
      * @return int - pwm uptime duration in terms of clock ticks.
      */
-    static int map(float norm){
-        return (norm) * (MOTOR_MAX_PULSEWIDTH_US - MOTOR_MIN_PULSEWIDTH_US) + MOTOR_MIN_PULSEWIDTH_US;  
+    static int map(float norm, float MAX_PWM = MOTOR_MAX_PULSEWIDTH_US, float MIN_PWM = MOTOR_MIN_PULSEWIDTH_US){
+        return (norm) * (MAX_PWM - MIN_PWM) + MOTOR_MIN_PULSEWIDTH_US; 
     }
 
 
     /**
-     * @brief speeds of the motors to set must be strictly between  
+     * @brief Set the Range of PWM output
+     * 
+     * @param maxPwm maximum pwm uptime in MICROSECONDS
+     * @param minPwm minimum pwm uptime in MICROSECONDS
+     */
+    void setRange(float maxPwm, float minPwm);
+
+    /**
+     * @brief speeds of the motors to set must be strictly between -1 and 1
      * 
      */
     float speeds[MOTOR_COUNT_MAX];
 
     void update();
 
-    private:
+private:
+
+    float maxPwm = MOTOR_MAX_PULSEWIDTH_US, minPwm = MOTOR_MIN_PULSEWIDTH_US;
 
     int dirPins[MOTOR_COUNT_MAX];
     int pwmPins[MOTOR_COUNT_MAX];

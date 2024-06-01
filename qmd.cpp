@@ -17,34 +17,6 @@
 #include "driver/gpio.h"
 #include <string.h>
 
-/**
- * @brief default pwm and direction pins
- * 
- */
-int qmd::def_pwm_pins[] = {
-    GPIO_NUM_19, 
-    GPIO_NUM_21, 
-    GPIO_NUM_32, 
-    GPIO_NUM_33,
-    GPIO_NUM_22,
-    GPIO_NUM_23,
-    GPIO_NUM_25,
-    GPIO_NUM_26,
-    GPIO_NUM_27,
-    GPIO_NUM_14,
-    GPIO_NUM_13,
-    GPIO_NUM_15,
-};
-
-int qmd::def_dir_pins[] = {
-    GPIO_NUM_12, 
-    GPIO_NUM_4, 
-    GPIO_NUM_16,
-    GPIO_NUM_17,
-    GPIO_NUM_5,
-    GPIO_NUM_18
-};
-
 
 // convert pin number to bit mask
 #define GET_BIT(PIN)  (1ULL<<PIN) 
@@ -77,7 +49,7 @@ qmd::qmd(int count, int pwmPins[], int dirPins[]) {
     memcpy(this->pwmPins, pwmPins, sizeof(int) * MOTOR_COUNT_MAX);
 
     setupTimer(unit0);
-    setupTimer(unit1, 1);
+    if(count > UNIT_CHANNEL_COUNT) setupTimer(unit1, 1);
 
     gpio_config_t gpio_cfg = {
         .pin_bit_mask = 0,
@@ -87,7 +59,7 @@ qmd::qmd(int count, int pwmPins[], int dirPins[]) {
         .intr_type = GPIO_INTR_DISABLE 
     };
 
-    for(int i = 0; i < UNIT_CHANNEL_COUNT; i++){
+    for(int i = 0; i < count; i++){
         gpio_cfg.pin_bit_mask |= GET_BIT(dirPins[i]);
     }
 
@@ -95,9 +67,13 @@ qmd::qmd(int count, int pwmPins[], int dirPins[]) {
     
 };
 
+void qmd::setRange(float max_pwm, float min_pwm){
+    minPwm = min_pwm;
+    maxPwm = max_pwm;
+}
 
-
-void qmd::update(){
+void qmd::update()
+{
 
     float speed = 0.0f;
 
@@ -108,10 +84,9 @@ void qmd::update(){
             speed += 1.0f;
         }
         else gpio_set_level((gpio_num_t) dirPins[i], 0);
-        mcpwm_comparator_set_compare_value(unit0.cmps[i], map(speed));
+        mcpwm_comparator_set_compare_value(unit0.cmps[i], map(speed, maxPwm, minPwm));
     };
 }
-
 
 void qmd::setupTimer(unitHandler &unit, int id)
 {
