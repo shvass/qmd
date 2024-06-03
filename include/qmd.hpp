@@ -50,7 +50,7 @@ public:
      * @param pwmPins  array of GPIO pin numbers for pwm output
      * @param dirPins  array of GPIO pin numbers for direction output
      */
-    qmd(int count = 0, int pwmPins[], int dirPins[]);
+    qmd(int pwmPins[], int dirPins[], int count = 0);
 
 
     /**
@@ -84,8 +84,9 @@ private:
 
     float maxPwm = MOTOR_MAX_PULSEWIDTH_US, minPwm = MOTOR_MIN_PULSEWIDTH_US;
 
-    int dirPins[MOTOR_COUNT_MAX];
-    int pwmPins[MOTOR_COUNT_MAX];
+    int count = 0;
+    int dirPins[MOTOR_COUNT_MAX] = {0};
+    int pwmPins[MOTOR_COUNT_MAX] = {0};
     // mcpwm handlers for internal use  
 
 

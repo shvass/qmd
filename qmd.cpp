@@ -43,10 +43,10 @@ mcpwm_comparator_config_t comparator_config = {
 };
 
 
-qmd::qmd(int count, int pwmPins[], int dirPins[]) {
+qmd::qmd( int pwmPins[], int dirPins[], int count) : count(count) {
 
-    memcpy(this->dirPins, dirPins, sizeof(int) * MOTOR_COUNT_MAX);
-    memcpy(this->pwmPins, pwmPins, sizeof(int) * MOTOR_COUNT_MAX);
+    memcpy(this->dirPins, dirPins, sizeof(int) * count);
+    memcpy(this->pwmPins, pwmPins, sizeof(int) * count);
 
     setupTimer(unit0);
     if(count > UNIT_CHANNEL_COUNT) setupTimer(unit1, 1);
@@ -63,8 +63,7 @@ qmd::qmd(int count, int pwmPins[], int dirPins[]) {
         gpio_cfg.pin_bit_mask |= GET_BIT(dirPins[i]);
     }
 
-    gpio_config(&gpio_cfg);
-    
+    // gpio_config(&gpio_cfg);
 };
 
 void qmd::setRange(float max_pwm, float min_pwm){
