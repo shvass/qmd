@@ -60,7 +60,7 @@ public:
      * @return int - pwm uptime duration in terms of clock ticks.
      */
     static int map(float norm, float MAX_PWM = MOTOR_MAX_PULSEWIDTH_US, float MIN_PWM = MOTOR_MIN_PULSEWIDTH_US){
-        return (norm) * (MAX_PWM - MIN_PWM) + MOTOR_MIN_PULSEWIDTH_US; 
+        return (norm) * (MAX_PWM - MIN_PWM) + MIN_PWM; 
     }
 
 
@@ -72,21 +72,32 @@ public:
      */
     void setRange(float maxPwm, float minPwm);
 
+
+    /**
+     * @brief Set the Inverting Mode for reverse drive of motor
+     * 
+     * @param flipLogic true - set whether uptime is replaced with downtime when reverse drive 
+     *                  false - uptime stays same for same magitude whether in forward or backward drive
+     */
+    inline void setInvertingMode(bool flipLogic = true) { invertingMode = flipLogic; };
+
     /**
      * @brief speeds of the motors to set must be strictly between -1 and 1
      * 
      */
-    float speeds[MOTOR_COUNT_MAX];
+    float speeds[MOTOR_COUNT_MAX] = {0.0f};
 
     void update();
 
 private:
-
+    
     float maxPwm = MOTOR_MAX_PULSEWIDTH_US, minPwm = MOTOR_MIN_PULSEWIDTH_US;
-
+    
     int count = 0;
     int dirPins[MOTOR_COUNT_MAX] = {0};
     int pwmPins[MOTOR_COUNT_MAX] = {0};
+    bool invertingMode = false;
+
     // mcpwm handlers for internal use  
 
 

@@ -63,7 +63,7 @@ qmd::qmd( int pwmPins[], int dirPins[], int count) : count(count) {
         gpio_cfg.pin_bit_mask |= GET_BIT(dirPins[i]);
     }
 
-    // gpio_config(&gpio_cfg);
+    gpio_config(&gpio_cfg);
 };
 
 void qmd::setRange(float max_pwm, float min_pwm){
@@ -79,8 +79,8 @@ void qmd::update()
     for( int  i = 0; i < UNIT_CHANNEL_COUNT; i++) {
         speed = speeds[i];
         if(speed < 0.0f) {
-            gpio_set_level((gpio_num_t) dirPins[i], 1);
-            speed += 1.0f;
+            gpio_set_level((gpio_num_t) dirPins[i], 1); 
+            speed = (invertingMode) ?  speed + 1.0f : abs(speed);
         }
         else gpio_set_level((gpio_num_t) dirPins[i], 0);
         mcpwm_comparator_set_compare_value(unit0.cmps[i], map(speed, maxPwm, minPwm));
