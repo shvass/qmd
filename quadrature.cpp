@@ -25,6 +25,12 @@ pcnt_chan_config_t chan_config = {
     .flags = {0, 0, 0, 0, 0}};
 
 
+pcnt_glitch_filter_config_t filter_config = {
+    .max_glitch_ns = DECODER_GLITCH_NS,
+};
+
+
+
 
 decoder::decoder(int *phaseA, int *phaseB, int count){
 
@@ -47,6 +53,9 @@ decoder::decoder(int *phaseA, int *phaseB, int count){
         
         pcnt_unit_add_watch_point(current, PCNT_COUNT_LIMIT_HIGH);
         pcnt_unit_add_watch_point(current, PCNT_COUNT_LIMIT_LOW);
+
+        pcnt_unit_set_glitch_filter(current, &filter_config);
+
         pcnt_unit_enable(current);
         pcnt_unit_start(current);
     };

@@ -22,6 +22,7 @@
 
 
 #define DECODER_MAX_WHEEL_COUNT 4
+#define DECODER_GLITCH_NS (10000)
 
 /**
  * @brief multichannel rotary decoder
