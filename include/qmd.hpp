@@ -23,8 +23,12 @@
 /**
  * @brief motor specific configurations
  */
-#define MOTOR_MIN_PULSEWIDTH_US 500      // Minimum pulse width in microseconds 
-#define MOTOR_MAX_PULSEWIDTH_US 2500   // maximum pulse width in microseconds 
+// #define MOTOR_MIN_PULSEWIDTH_US 500      // Minimum pulse width in microseconds 
+// #define MOTOR_MAX_PULSEWIDTH_US 2500   // maximum pulse width in microseconds 
+
+#define MOTOR_MIN_PULSEWIDTH_US 0      // Minimum pulse width in microseconds 
+#define MOTOR_MAX_PULSEWIDTH_US 20000   // maximum pulse width in microseconds 
+
 #define MOTOR_TIMEBASE_RESOLUTION_HZ 1 * 1000 * 1000   // clock frequency in Hertz  ( 1 MHz current) 
 #define MOTOR_TIMEBASE_PERIOD        20000      // PWM time period in clock ticks   ( 20 ms current) 
 
@@ -69,8 +73,9 @@ public:
      * 
      * @param maxPwm maximum pwm uptime in MICROSECONDS
      * @param minPwm minimum pwm uptime in MICROSECONDS
+     * @param index channel index to set range of, default -1 (set to all) 
      */
-    void setRange(float maxPwm, float minPwm);
+    void setRange(float maxPwm, float minPwm, int index = -1);
 
 
     /**
@@ -91,7 +96,7 @@ public:
 
 private:
     
-    float maxPwm = MOTOR_MAX_PULSEWIDTH_US, minPwm = MOTOR_MIN_PULSEWIDTH_US;
+    float maxPwms[MOTOR_COUNT_MAX] = {MOTOR_MAX_PULSEWIDTH_US}, minPwms[MOTOR_COUNT_MAX] = {MOTOR_MIN_PULSEWIDTH_US};
     
     int count = 0;
     int dirPins[MOTOR_COUNT_MAX] = {0};
