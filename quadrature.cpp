@@ -71,6 +71,23 @@ void decoder::update(){
 }
 
 
+void decoder::reset(int index){
+    // for any negative index reset all
+    if(index < 0){
+        for(int i = 0; i < unitCount; i++){
+            pcnt_unit_clear_count(pcnt_unit[i]);
+            count[i] = 0;
+        };
+    }
+
+    // check for valid index
+    else if(index < unitCount) {
+        pcnt_unit_clear_count(pcnt_unit[index]);
+        count[index] = 0;
+    }
+}
+
+
 
 decoder::~decoder(){
 

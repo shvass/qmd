@@ -52,6 +52,13 @@ public:
     /// @brief update latest readings into count 
     void update();
 
+    /**
+     * @brief reset the counter to zero
+     * 
+     * index - index to reset ( default all )
+     */
+    void reset(int index = -1);
+
     ~decoder();
 
 private:
